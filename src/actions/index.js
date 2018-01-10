@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_KEY = '54a5dc361bbaeb9ce2f03cb965d20aa2';
 
-const URL_PREFIX = `http://api.openweathermap.org/data/2.5/forecast`;
+const URL_PREFIX = `https://api.openweathermap.org/data/2.5/forecast`;
 
 export const ACTION_TYPE_FETCH = 'ACTION_TYPE_FETCH';
 export const ACTION_REMOVE_WEATHER = 'ACTION_REMOVE_WEATHER';
