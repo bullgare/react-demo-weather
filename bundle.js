@@ -24419,8 +24419,32 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	// @link https://developers.google.com/chart/interactive/docs/gallery/linechart
 	var Chart = function Chart(props) {
-	  return _react2.default.createElement(_reactChartkick.AreaChart, { data: props.data, width: '300px', height: '150px', min: props.min, colors: props.colors });
+	  return _react2.default.createElement(_reactChartkick.LineChart, {
+	    data: props.data,
+	    width: '300px',
+	    height: '150px',
+	    min: props.min,
+	    colors: props.colors,
+	    library: {
+	      crosshair: { trigger: 'both' },
+	      explorer: {
+	        axis: 'horizontal',
+	        keepInBounds: true
+	      },
+	      interpolateNulls: true,
+	      pointSize: 0,
+	      // theme: 'maximized',
+	      vAxis: {
+	        viewWindowMode: 'pretty',
+	        viewWindow: {
+	          min: null,
+	          max: null
+	        }
+	      }
+	    }
+	  });
 	};
 
 	exports.default = Chart;
