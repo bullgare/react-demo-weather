@@ -22664,8 +22664,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.ACTION_REMOVE_WEATHER = exports.ACTION_TYPE_FETCH = undefined;
+	exports.ACTION_UPDATE_WEATHER = exports.ACTION_REMOVE_WEATHER = exports.ACTION_TYPE_FETCH = undefined;
 	exports.fetchWeather = fetchWeather;
+	exports.updateWeather = updateWeather;
 	exports.removeWeather = removeWeather;
 
 	var _axios = __webpack_require__(209);
@@ -22680,14 +22681,24 @@
 
 	var ACTION_TYPE_FETCH = exports.ACTION_TYPE_FETCH = 'ACTION_TYPE_FETCH';
 	var ACTION_REMOVE_WEATHER = exports.ACTION_REMOVE_WEATHER = 'ACTION_REMOVE_WEATHER';
+	var ACTION_UPDATE_WEATHER = exports.ACTION_UPDATE_WEATHER = 'ACTION_UPDATE_WEATHER';
 
 	function fetchWeather(city) {
-	  var url = URL_PREFIX + '?q=' + city + ',ru&appid=' + API_KEY;
-	  var promise = _axios2.default.get(url);
+	  var promise = fetch(city);
 
 	  return {
 	    type: ACTION_TYPE_FETCH,
 	    payload: promise
+	  };
+	}
+
+	function updateWeather(city, pos, cb) {
+	  var promise = fetch(city);
+	  return {
+	    type: ACTION_UPDATE_WEATHER + pos,
+	    payload: promise.then(function (data) {
+	      cb();return data;
+	    })
 	  };
 	}
 
@@ -22696,6 +22707,11 @@
 	    type: ACTION_REMOVE_WEATHER,
 	    position: pos
 	  };
+	}
+
+	function fetch(city) {
+	  var url = URL_PREFIX + '?q=' + city + ',ru&appid=' + API_KEY;
+	  return _axios2.default.get(url);
 	}
 
 /***/ }),
@@ -24285,14 +24301,25 @@
 
 	    var _this = _possibleConstructorReturn(this, (WeatherList.__proto__ || Object.getPrototypeOf(WeatherList)).call(this, props));
 
+	    _this.state = { updating: false };
 	    _this.renderCity = _this.renderCity.bind(_this);
 	    return _this;
 	  }
 
 	  _createClass(WeatherList, [{
+	    key: 'onUpdate',
+	    value: function onUpdate(name, pos) {
+	      var _this2 = this;
+
+	      this.setState({ updating: true });
+	      this.props.updateWeather(name, pos, function () {
+	        return _this2.setState({ updating: false });
+	      });
+	    }
+	  }, {
 	    key: 'renderCity',
 	    value: function renderCity(cityData, pos) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var name = cityData.city.name;
 	      var values = cityData.list.reduce(function (res, data) {
@@ -24302,9 +24329,11 @@
 	        return res;
 	      }, { temp: {}, pressure: {}, humidity: {} });
 
+	      var updateClasses = 'btn btn-warning btn-update' + (this.state.updating ? ' btn-update_progress' : '');
+
 	      return _react2.default.createElement(
 	        'tr',
-	        { key: name },
+	        { key: name + cityData.ts },
 	        _react2.default.createElement(
 	          'td',
 	          null,
@@ -24331,9 +24360,23 @@
 	          _react2.default.createElement(
 	            'div',
 	            {
+	              className: updateClasses,
+	              style: { marginBottom: '20px' },
+	              onClick: function onClick() {
+	                return _this3.onUpdate(name, pos);
+	              } },
+	            _react2.default.createElement(
+	              'span',
+	              null,
+	              '\u21BB'
+	            )
+	          ),
+	          _react2.default.createElement(
+	            'div',
+	            {
 	              className: 'btn btn-danger',
 	              onClick: function onClick() {
-	                return _this2.props.removeWeather(pos);
+	                return _this3.props.removeWeather(pos);
 	              } },
 	            'X'
 	          )
@@ -24396,7 +24439,7 @@
 	}
 
 	function mapDispatchToProps(dispatch) {
-	  return (0, _redux.bindActionCreators)({ removeWeather: _index.removeWeather }, dispatch);
+	  return (0, _redux.bindActionCreators)({ removeWeather: _index.removeWeather, updateWeather: _index.updateWeather }, dispatch);
 	}
 
 	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(WeatherList);
@@ -26512,12 +26555,23 @@
 	  value: true
 	});
 
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 	exports.default = function () {
 	  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 	  var action = arguments[1];
 
 	  if (action.type === _index.ACTION_TYPE_FETCH && action.payload.data) {
-	    return [].concat(_toConsumableArray(state), [action.payload.data]);
+	    return [].concat(_toConsumableArray(state), [addTimestamp(action.payload.data)]);
+	  }
+
+	  if (action.type.startsWith(_index.ACTION_UPDATE_WEATHER) && action.payload.data) {
+	    var pos = +action.type.replace(_index.ACTION_UPDATE_WEATHER, '');
+	    if (pos < 0 || pos >= state.length) {
+	      return state;
+	    }
+
+	    return [].concat(_toConsumableArray(state.slice(0, pos)), [addTimestamp(action.payload.data)], _toConsumableArray(state.slice(pos + 1)));
 	  }
 
 	  if (action.type === _index.ACTION_REMOVE_WEATHER && action.position >= 0 && action.position < state.length) {
@@ -26530,6 +26584,10 @@
 	var _index = __webpack_require__(208);
 
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+	function addTimestamp(data) {
+	  return _extends({}, data, { ts: +new Date() });
+	}
 
 /***/ })
 /******/ ]);

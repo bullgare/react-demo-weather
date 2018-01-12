@@ -2,13 +2,19 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import Chart from '../components/chart';
-import {removeWeather} from '../actions/index';
+import {removeWeather, updateWeather} from '../actions/index';
 
 class WeatherList extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {updating: false};
     this.renderCity = this.renderCity.bind(this);
+  }
+
+  onUpdate(name, pos) {
+    this.setState({updating: true});
+    this.props.updateWeather(name, pos, () => this.setState({updating: false}));
   }
 
   renderCity(cityData, pos) {
@@ -20,8 +26,10 @@ class WeatherList extends Component {
       return res;
     }, {temp: {}, pressure: {}, humidity: {}});
 
+    const updateClasses = `btn btn-warning btn-update${this.state.updating ? ' btn-update_progress' : ''}`;
+
     return (
-      <tr key={name}>
+      <tr key={name + cityData.ts}>
         <td>{name}</td>
 
         <td><Chart data={values.temp} colors={["#bdb", "#666"]} /></td>
@@ -31,6 +39,12 @@ class WeatherList extends Component {
         <td><Chart data={values.humidity} /></td>
 
         <td style={{verticalAlign: 'middle'}}>
+          <div
+              className={updateClasses}
+              style={{marginBottom: '20px'}}
+              onClick={() => this.onUpdate(name, pos)}>
+            <span>&#x21bb;</span>
+          </div>
           <div
               className='btn btn-danger'
               onClick={() => this.props.removeWeather(pos)}>
@@ -68,7 +82,7 @@ function mapStateToProps({weather}) {
 }
 
 function mapDispatchToProps(dispatch) {
-  return bindActionCreators({removeWeather: removeWeather}, dispatch);
+  return bindActionCreators({removeWeather, updateWeather}, dispatch);
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(WeatherList);
